@@ -274,8 +274,8 @@ public class Scanner {
 			case "true": case "false":
 				return(TokenType.BOOLVALUE);
 				
-			default:
-				if (!Character.isLetter(_currentText.charAt(0))) {
+			default:				
+				if (_currentText.length() == 0 || !Character.isLetter(_currentText.charAt(0))) {
 					_errors.reportError("Scan Error: ID is not valid");
 					return(TokenType.ERROR);
 				}
