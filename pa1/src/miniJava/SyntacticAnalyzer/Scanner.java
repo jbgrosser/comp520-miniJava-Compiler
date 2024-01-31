@@ -53,7 +53,6 @@ public class Scanner {
 	}
 	
 	public void skipMultiComment() {
-		_currentText.deleteCharAt(_currentText.length() - 1);
 		skipIt();
 		while((_currentChar != '/' || _currentText.charAt(_currentText.length() - 1) != '*' ) && !eot) {
 			takeIt();
@@ -200,6 +199,10 @@ public class Scanner {
 		case '.':
 			takeIt();
 			return(TokenType.DOT);
+
+		case ',':
+			takeIt();
+			return(TokenType.COMMA);
 			
 		case '|':
 			takeIt();
@@ -213,6 +216,7 @@ public class Scanner {
 		case '&':
 			takeIt();
 			if (_currentChar == '&') {
+				takeIt();
 				return(TokenType.BINOP);
 			}
 			_errors.reportError("Scan Error: Single & not allowed");
@@ -240,6 +244,9 @@ public class Scanner {
 			case "static":
 				return(TokenType.STATIC);
 				
+			case "void":
+				return(TokenType.VOID);
+
 			case "return":
 				return(TokenType.RETURN);
 				

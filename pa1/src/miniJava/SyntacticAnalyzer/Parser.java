@@ -29,7 +29,7 @@ public class Parser {
 	// Program ::= (ClassDeclaration)* eot
 	private void parseProgram() throws SyntaxError {
 		// TODO: Keep parsing class declarations until eot
-		while (_currentToken.getTokenType() != TokenType.EOT && _currentToken != null) {
+		while (_currentToken != null && _currentToken.getTokenType() != TokenType.EOT) {
 			parseClassDeclaration();
 		}
 	}
@@ -44,12 +44,14 @@ public class Parser {
 		// TODO: Take in a {
 		accept(TokenType.LCURLY);
 		// TODO: Parse either a FieldDeclaration or MethodDeclaration
-		parseFieldMethodDeclaration();
+		while (TokenType.RCURLY != _currentToken.getTokenType())
+			parseFieldMethodDeclaration();
 		// TODO: Take in a }
 		accept(TokenType.RCURLY);
 	}
 	
 	private void parseFieldMethodDeclaration() throws SyntaxError {
+		boolean method = false;
 		if (TokenType.PUBLIC == _currentToken.getTokenType()) {
 			accept(TokenType.PUBLIC);
 		}
@@ -63,6 +65,7 @@ public class Parser {
 		
 		if (TokenType.VOID == _currentToken.getTokenType()) {
 			accept(TokenType.VOID);
+			method = true;
 		}
 		else if (TokenType.BOOL == _currentToken.getTokenType()) {
 			accept(TokenType.BOOL);
@@ -86,8 +89,8 @@ public class Parser {
 		}
 		
 		accept(TokenType.ID);
-		
-		if (TokenType.SEMICOLON == _currentToken.getTokenType()) {
+
+		if (TokenType.SEMICOLON == _currentToken.getTokenType() && !method) {
 			accept(TokenType.SEMICOLON);
 		}
 		else {
@@ -213,43 +216,42 @@ public class Parser {
 				accept(TokenType.SEMICOLON);
 			}
 			else if (TokenType.ID == _currentToken.getTokenType()) {
+				boolean reference = false;
+
 				accept(TokenType.ID);
-				if (TokenType.ID == _currentToken.getTokenType()) {
-					if (TokenType.LBRACKET == _currentToken.getTokenType()) {
-						accept(TokenType.LBRACKET);
-						accept(TokenType.RBRACKET);
-					}
+
+				if (TokenType.DOT == _currentToken.getTokenType()) {
+					accept(TokenType.DOT);
+					accept(TokenType.ID);
+					reference = true;
+				}
+
+				if (!reference && TokenType.ID == _currentToken.getTokenType()) {
 					accept(TokenType.ID);
 					accept(TokenType.EQUALS);
 					parseExpression();
 					accept(TokenType.SEMICOLON);
 				}
 				else if (TokenType.EQUALS == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
-						accept(TokenType.ID);
-					}
 					accept(TokenType.EQUALS);
 					parseExpression();
 					accept(TokenType.SEMICOLON);
 				}
 				else if (TokenType.LBRACKET == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
+					accept(TokenType.LBRACKET);
+					if (TokenType.RBRACKET != _currentToken.getTokenType()) {
+						parseExpression();
+						accept(TokenType.RBRACKET);
+					} 
+					else {
+						accept(TokenType.RBRACKET);
 						accept(TokenType.ID);
 					}
-					accept(TokenType.LBRACKET);
-					parseExpression();
-					accept(TokenType.RBRACKET);
 					accept(TokenType.EQUALS);
 					parseExpression();
 					accept(TokenType.SEMICOLON);
 				}
 				else if (TokenType.LPAREN == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
-						accept(TokenType.ID);
-					}
 					accept(TokenType.LPAREN);
 					if (TokenType.RPAREN != _currentToken.getTokenType()) {
 						parseArgList();
@@ -332,6 +334,7 @@ public class Parser {
 		else if (TokenType.NEW == _currentToken.getTokenType()) {
 			accept(TokenType.NEW);
 			if (TokenType.ID == _currentToken.getTokenType()) {
+				accept(TokenType.ID);
 				if (TokenType.LPAREN == _currentToken.getTokenType()) {
 					accept(TokenType.LPAREN);
 					accept(TokenType.RPAREN);
@@ -391,6 +394,9 @@ public class Parser {
 				accept(TokenType.RPAREN);
 			}
 		}
+		else {
+			accept(TokenType.ERROR);
+		}
 		
 		if (TokenType.BINOP == _currentToken.getTokenType() || TokenType.SUB == _currentToken.getTokenType()) {
 			if (TokenType.BINOP == _currentToken.getTokenType()) {
@@ -422,7 +428,7 @@ public class Parser {
 		
 		// TODO: Report an error here.
 		//  "Expected token X, but got Y"
-		_errors.reportError("Got token " + _currentToken.getTokenText());
+		_errors.reportError("Got token " + _currentToken.getTokenText() + " expected " + expectedType);
 		throw new SyntaxError();
 	}
 }
