@@ -57,6 +57,9 @@ public class Scanner {
 		while((_currentChar != '/' || _currentText.charAt(_currentText.length() - 1) != '*' ) && !eot) {
 			takeIt();
 		}
+		if (eot) {
+			_errors.reportError("Multiline comment doesn't end");
+		}
 		takeIt();
 		skipWhitespace();
 

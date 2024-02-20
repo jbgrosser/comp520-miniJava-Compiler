@@ -220,7 +220,7 @@ public class Parser {
 
 				accept(TokenType.ID);
 
-				if (TokenType.DOT == _currentToken.getTokenType()) {
+				while (TokenType.DOT == _currentToken.getTokenType()) {
 					accept(TokenType.DOT);
 					accept(TokenType.ID);
 					reference = true;
@@ -265,20 +265,16 @@ public class Parser {
 			}
 			else if (TokenType.THIS == _currentToken.getTokenType()) {
 				accept(TokenType.THIS);
+				while (TokenType.DOT == _currentToken.getTokenType()) {
+					accept(TokenType.DOT);
+					accept(TokenType.ID);
+				}
 				if (TokenType.EQUALS == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
-						accept(TokenType.ID);
-					}
 					accept(TokenType.EQUALS);
 					parseExpression();
 					accept(TokenType.SEMICOLON);
 				}
 				else if (TokenType.LBRACKET == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
-						accept(TokenType.ID);
-					}
 					accept(TokenType.LBRACKET);
 					parseExpression();
 					accept(TokenType.RBRACKET);
@@ -287,10 +283,6 @@ public class Parser {
 					accept(TokenType.SEMICOLON);
 				}
 				else if (TokenType.LPAREN == _currentToken.getTokenType()) {
-					if (TokenType.DOT == _currentToken.getTokenType()) {
-						accept(TokenType.DOT);
-						accept(TokenType.ID);
-					}
 					accept(TokenType.LPAREN);
 					if (TokenType.RPAREN != _currentToken.getTokenType()) {
 						parseArgList();
