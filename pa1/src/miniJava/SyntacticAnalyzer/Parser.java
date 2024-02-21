@@ -48,7 +48,6 @@ public class Parser {
 		accept(TokenType.ID);
 		// TODO: Take in a {
 		accept(TokenType.LCURLY);
-		StatementList statements = new StatementList();
 
 		// TODO: Parse either a FieldDeclaration or MethodDeclaration
 		while (TokenType.RCURLY != _currentToken.getTokenType()) {
@@ -95,15 +94,16 @@ public class Parser {
 				}
 			}
 			else if (TokenType.ID == _currentToken.getTokenType()) {
+				Token temp = _currentToken;
 				accept(TokenType.ID);
 				if (TokenType.LBRACKET == _currentToken.getTokenType()) {
 					accept(TokenType.LBRACKET);
 					accept(TokenType.RBRACKET);
-					TypeDenoter classType = new ClassType(new Identifier(_currentToken), null);
+					TypeDenoter classType = new ClassType(new Identifier(temp), null);
 					type = new ArrayType(classType, null);
 				}
 				else {
-					type = new ClassType(new Identifier(_currentToken), null);
+					type = new ClassType(new Identifier(temp), null);
 				}
 			}
 			else {
@@ -126,6 +126,7 @@ public class Parser {
 				}
 				accept(TokenType.RPAREN);
 				accept(TokenType.LCURLY);
+				StatementList statements = new StatementList();
 				while (TokenType.RCURLY != _currentToken.getTokenType()) {
 					statements.add(parseStatement());
 				}
@@ -159,15 +160,16 @@ public class Parser {
 			}
 		}
 		else if (TokenType.ID == _currentToken.getTokenType()) {
+			Token savedToken = _currentToken;
 			accept(TokenType.ID);
 			if (TokenType.LBRACKET == _currentToken.getTokenType()) {
 				accept(TokenType.LBRACKET);
 				accept(TokenType.RBRACKET);
-				TypeDenoter classType = new ClassType(new Identifier(_currentToken), null);
+				TypeDenoter classType = new ClassType(new Identifier(savedToken), null);
 				return new ArrayType(classType, null);
 			}
 			else {
-				return new ClassType(new Identifier(_currentToken), null);
+				return new ClassType(new Identifier(savedToken), null);
 			}
 		}
 		else {
@@ -210,7 +212,7 @@ public class Parser {
 				while (TokenType.RCURLY != _currentToken.getTokenType()) {
 					statements.add(parseStatement());
 				}
-				whileS = new BlockStmt(null, null);
+				whileS = new BlockStmt(statements, null);
 				accept(TokenType.RCURLY);
 			}
 			else {
@@ -232,6 +234,7 @@ public class Parser {
 					statements.add(parseStatement());
 				}
 				accept(TokenType.RCURLY);
+				ifS = new BlockStmt(statements, null);
 			}
 			else {
 				ifS = parseStatement();
@@ -247,6 +250,7 @@ public class Parser {
 						statements.add(parseStatement());
 					}
 					accept(TokenType.RCURLY);
+					elseS = new BlockStmt(statements, null);
 				}
 				else {
 					elseS = parseStatement();
@@ -297,13 +301,16 @@ public class Parser {
 				if (TokenType.RBRACKET != _currentToken.getTokenType()) {
 					e = parseExpression();
 					accept(TokenType.RBRACKET);
+					accept(TokenType.EQUALS);
+					statement = new IxAssignStmt(ref, e, parseExpression(), null);
 				} 
 				else {
 					accept(TokenType.RBRACKET);
+					Token temp = _currentToken;
 					accept(TokenType.ID);
+					accept(TokenType.EQUALS);
+					statement = new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(savedCurrentToken), null), null), temp.getTokenText(), null), parseExpression(), null);
 				}
-				accept(TokenType.EQUALS);
-				statement = new IxAssignStmt(ref, e, parseExpression(), null);
 				accept(TokenType.SEMICOLON);
 			}
 			else if (TokenType.LPAREN == _currentToken.getTokenType()) {
@@ -407,6 +414,7 @@ public class Parser {
 			Expression e = null;
 			accept(TokenType.NEW);
 			if (TokenType.ID == _currentToken.getTokenType()) {
+				savedCurrentToken = _currentToken;
 				accept(TokenType.ID);
 				if (TokenType.LPAREN == _currentToken.getTokenType()) {
 					accept(TokenType.LPAREN);
@@ -461,10 +469,9 @@ public class Parser {
 			}
 
 			if (TokenType.DOT == _currentToken.getTokenType()) {
-				Token temp = _currentToken;
 				accept(TokenType.DOT);
+				reference = new QualRef(reference, new Identifier(_currentToken), null);
 				accept(TokenType.ID);
-				reference = new QualRef(reference, new Identifier(temp), null);
 			}
 			
 			if (TokenType.LBRACKET == _currentToken.getTokenType()) {
