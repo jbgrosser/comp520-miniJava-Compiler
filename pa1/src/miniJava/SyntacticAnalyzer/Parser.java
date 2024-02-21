@@ -204,7 +204,7 @@ public class Parser {
 			Statement whileS = null;
 			accept(TokenType.WHILE);
 			accept(TokenType.LPAREN);
-			expression = parseExpression();
+			expression = parseOr();
 			accept(TokenType.RPAREN);
 			if (TokenType.LCURLY == _currentToken.getTokenType()) {
 				accept(TokenType.LCURLY);
@@ -225,7 +225,7 @@ public class Parser {
 			Statement elseS = null;
 			accept(TokenType.IF);
 			accept(TokenType.LPAREN);
-			expression = parseExpression();
+			expression = parseOr();
 			accept(TokenType.RPAREN);
 			if (TokenType.LCURLY == _currentToken.getTokenType()) {
 				accept(TokenType.LCURLY);
@@ -261,7 +261,7 @@ public class Parser {
 		else if (TokenType.RETURN == _currentToken.getTokenType()) {
 			accept(TokenType.RETURN);
 			if (TokenType.SEMICOLON != _currentToken.getTokenType()) {
-				expression = parseExpression();
+				expression = parseOr();
 			}
 			accept(TokenType.SEMICOLON);
 			return new ReturnStmt(expression, null);
@@ -284,14 +284,14 @@ public class Parser {
 				Token temp = _currentToken;
 				accept(TokenType.ID);
 				accept(TokenType.EQUALS);
-				Expression e = parseExpression();
+				Expression e = parseOr();
 				accept(TokenType.SEMICOLON);
 				ClassType c = new ClassType(new Identifier(savedCurrentToken), null);
 				statement = new VarDeclStmt(new VarDecl(c, temp.getTokenText(), null), e, null);
 			}
 			else if (TokenType.EQUALS == _currentToken.getTokenType()) {
 				accept(TokenType.EQUALS);
-				Expression equalExpression = parseExpression();
+				Expression equalExpression = parseOr();
 				accept(TokenType.SEMICOLON);
 				statement = new AssignStmt(ref, equalExpression, null);
 			}
@@ -299,17 +299,17 @@ public class Parser {
 				accept(TokenType.LBRACKET);
 				Expression e = null;
 				if (TokenType.RBRACKET != _currentToken.getTokenType()) {
-					e = parseExpression();
+					e = parseOr();
 					accept(TokenType.RBRACKET);
 					accept(TokenType.EQUALS);
-					statement = new IxAssignStmt(ref, e, parseExpression(), null);
+					statement = new IxAssignStmt(ref, e, parseOr(), null);
 				} 
 				else {
 					accept(TokenType.RBRACKET);
 					Token temp = _currentToken;
 					accept(TokenType.ID);
 					accept(TokenType.EQUALS);
-					statement = new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(savedCurrentToken), null), null), temp.getTokenText(), null), parseExpression(), null);
+					statement = new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(savedCurrentToken), null), null), temp.getTokenText(), null), parseOr(), null);
 				}
 				accept(TokenType.SEMICOLON);
 			}
@@ -340,16 +340,16 @@ public class Parser {
 
 			if (TokenType.EQUALS == _currentToken.getTokenType()) {
 				accept(TokenType.EQUALS);
-				Expression equalExpression = parseExpression();
+				Expression equalExpression = parseOr();
 				accept(TokenType.SEMICOLON);
 				statement = new AssignStmt(ref, equalExpression, null);
 			}
 			else if (TokenType.LBRACKET == _currentToken.getTokenType()) {
 				accept(TokenType.LBRACKET);
-				Expression e = parseExpression();
+				Expression e = parseOr();
 				accept(TokenType.RBRACKET);
 				accept(TokenType.EQUALS);
-				statement = new IxAssignStmt(ref, e, parseExpression(), null);
+				statement = new IxAssignStmt(ref, e, parseOr(), null);
 				accept(TokenType.SEMICOLON);
 			}
 			else if (TokenType.LPAREN == _currentToken.getTokenType()) {
@@ -388,7 +388,7 @@ public class Parser {
 			Token temp = _currentToken;
 			accept(TokenType.ID);
 			accept(TokenType.EQUALS);
-			Expression e = parseExpression();
+			Expression e = parseOr();
 			accept(TokenType.SEMICOLON);
 			return new VarDeclStmt(new VarDecl(type, temp.getTokenText(), null), e, null);
 		}
@@ -446,16 +446,6 @@ public class Parser {
 			accept(TokenType.RPAREN);
 			expression = e;
 		}
-		else if (TokenType.UNOP == _currentToken.getTokenType() || TokenType.SUB == _currentToken.getTokenType()) {
-			if (TokenType.UNOP == _currentToken.getTokenType()) {
-				accept(TokenType.UNOP);
-			}
-			else {
-				accept(TokenType.SUB);
-			}
-			Expression e = parseExpression();
-			expression = new UnaryExpr(new Operator(savedCurrentToken), e, null);
-		}
 		else if (TokenType.THIS == _currentToken.getTokenType() || TokenType.ID == _currentToken.getTokenType()) {
 			Reference reference = null;
 			Expression e = null;
@@ -495,30 +485,115 @@ public class Parser {
 		}
 		else {
 			accept(TokenType.ERROR);
-			
 		}
-		
-		if (TokenType.BINOP == _currentToken.getTokenType() || TokenType.SUB == _currentToken.getTokenType()) {
-			Token temp = _currentToken;
-			if (TokenType.BINOP == _currentToken.getTokenType()) {
-				accept(TokenType.BINOP);
+		return expression;
+	}
+
+	private Expression parseUnary() {
+		Expression expression = null;
+		Token temp = _currentToken;
+		if(_currentToken.getTokenText().equals("!") || _currentToken.getTokenText().equals("-")) {
+			if (TokenType.UNOP == _currentToken.getTokenType()) {
+				accept(TokenType.UNOP);
 			}
 			else {
 				accept(TokenType.SUB);
 			}
 			Expression e = parseExpression();
-			expression = new BinaryExpr(new Operator(temp), expression, e, null);
+			expression = new UnaryExpr(new Operator(temp), e, null);
+			temp = _currentToken;
+		}
+		else {
+			expression = parseExpression();
 		}
 		return expression;
 	}
 	
+	private Expression parseMultDiv() {
+		Expression expression = parseUnary();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals("/") || _currentToken.getTokenText().equals("*")) {
+			accept(TokenType.BINOP);
+			Expression expression2 = parseUnary();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
+	private Expression parseAddSub() {
+		Expression expression = parseMultDiv();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals("+") || _currentToken.getTokenText().equals("-")) {
+			if (_currentToken.getTokenText().equals("+")) {
+				accept(TokenType.BINOP);
+			}
+			else {
+				accept(TokenType.SUB);
+			}
+			Expression expression2 = parseMultDiv();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
+	private Expression parseComparison() {
+		Expression expression = parseAddSub();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals(">=") || _currentToken.getTokenText().equals(">") || 
+		_currentToken.getTokenText().equals("<") || _currentToken.getTokenText().equals("<=")) {
+			accept(TokenType.BINOP);
+			Expression expression2 = parseAddSub();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
+	private Expression parseEquals() {
+		Expression expression = parseComparison();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals("==") || _currentToken.getTokenText().equals("!=")) {
+			accept(TokenType.BINOP);
+			Expression expression2 = parseComparison();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
+	private Expression parseAnd() {
+		Expression expression = parseEquals();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals("&&")) {
+			accept(TokenType.BINOP);
+			Expression expression2 = parseEquals();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
+	private Expression parseOr() {
+		Expression expression = parseAnd();
+		Token temp = _currentToken;
+		while(_currentToken.getTokenText().equals("||")) {
+			accept(TokenType.BINOP);
+			Expression expression2 = parseAnd();
+			expression = new BinaryExpr(new Operator(temp), expression, expression2, null);
+			temp = _currentToken;
+		}
+		return expression;
+	}
+
 	private ExprList parseArgList() throws SyntaxError {
 		ExprList expressions = new ExprList();
-		expressions.add(parseExpression());
+		expressions.add(parseOr());
 		
 		while (TokenType.RPAREN != _currentToken.getTokenType()) {
 			accept(TokenType.COMMA);
-			expressions.add(parseExpression());
+			expressions.add(parseOr());
 		}
 		return expressions;
 	}
