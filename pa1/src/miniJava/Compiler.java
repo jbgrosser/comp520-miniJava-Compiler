@@ -6,6 +6,8 @@ import java.io.IOException;
 import miniJava.SyntacticAnalyzer.Parser;
 import miniJava.SyntacticAnalyzer.Scanner;
 import miniJava.SyntacticAnalyzer.Token;
+import miniJava.AbstractSyntaxTrees.Package;
+import miniJava.AbstractSyntaxTrees.*;
 
 public class Compiler {
 	// Main function, the file to compile will be an argument.
@@ -25,7 +27,8 @@ public class Compiler {
 		// TODO: Instantiate the parser with the scanner and error object
 		Parser parser = new Parser(scanner, reporter);
 		// TODO: Call the parser's parse function
-		parser.parse();
+		AST abstractSyntaxTree = parser.parse();
+		ASTDisplay display = new ASTDisplay();
 		// TODO: Check if any errors exist, if so, println("Error")
 		//  then output the errors
 		if (reporter.hasErrors()) {
@@ -34,7 +37,7 @@ public class Compiler {
 		}
 		// TODO: If there are no errors, println("Success")
 		else {
-			System.out.println("Success");
+			display.showTree(abstractSyntaxTree);
 		}
 	}
 }
