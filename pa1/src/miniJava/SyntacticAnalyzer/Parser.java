@@ -499,7 +499,7 @@ public class Parser {
 			else {
 				accept(TokenType.SUB);
 			}
-			Expression e = parseExpression();
+			Expression e = parseUnary();
 			expression = new UnaryExpr(new Operator(temp), e, null);
 			temp = _currentToken;
 		}
