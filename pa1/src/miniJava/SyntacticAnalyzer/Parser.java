@@ -423,7 +423,7 @@ public class Parser {
 				}
 				else {
 					accept(TokenType.LBRACKET);
-					Expression exp = parseExpression();
+					Expression exp = parseOr();
 					accept(TokenType.RBRACKET);
 					e = new NewArrayExpr(new ClassType(new Identifier(savedCurrentToken), null), exp, null);
 				}
@@ -431,7 +431,7 @@ public class Parser {
 			else if (TokenType.INT == _currentToken.getTokenType()) {
 				accept(TokenType.INT);
 				accept(TokenType.LBRACKET);
-				Expression exp = parseExpression();
+				Expression exp = parseOr();
 				accept(TokenType.RBRACKET);
 				e = new NewArrayExpr(new BaseType(TypeKind.INT, null), exp, null);
 			}
@@ -442,7 +442,7 @@ public class Parser {
 		}
 		else if (TokenType.LPAREN == _currentToken.getTokenType()) {
 			accept(TokenType.LPAREN);
-			Expression e = parseExpression();
+			Expression e = parseOr();
 			accept(TokenType.RPAREN);
 			expression = e;
 		}
@@ -466,7 +466,7 @@ public class Parser {
 			
 			if (TokenType.LBRACKET == _currentToken.getTokenType()) {
 				accept(TokenType.LBRACKET);
-				e = parseExpression();
+				e = parseOr();
 				accept(TokenType.RBRACKET);
 				expression = new IxExpr(reference, e, null);
 			}
