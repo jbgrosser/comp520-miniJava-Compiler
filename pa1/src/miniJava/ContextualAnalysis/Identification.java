@@ -12,6 +12,8 @@ import miniJava.AbstractSyntaxTrees.*;
 public class Identification implements Visitor<Object,Object> {
 	private ErrorReporter _errors;
 	private Stack<HashMap<String,Declaration>> idTable = new Stack<>();
+	private MethodDecl currMethodDecl = null;
+	private String currVar = null;
 	
 	public Identification(ErrorReporter errors) {
 		this._errors = errors;
@@ -61,7 +63,14 @@ public class Identification implements Visitor<Object,Object> {
 	public Declaration findDeclarationLoop(String s) {
 		for (int i = idTable.size() - 1; i >= 1; i--) {
 			if (idTable.get(i).containsKey(s)) {
-				return idTable.get(i).get(s);
+				if (i == 1) {
+					if (idTable.get(i).get(s).toString().equals("FieldDecl")) {
+						return idTable.get(i).get(s);
+					}
+				}
+				else {
+					return idTable.get(i).get(s);
+				}
 			}
 		}
 		return null;
@@ -136,6 +145,7 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitMethodDecl(MethodDecl md, Object arg) {
+		this.currMethodDecl = md;
 		md.type.visit(this, md);
 		HashMap<String,Declaration> l2 = new HashMap<>();
 		idTable.push(l2);
@@ -202,7 +212,9 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitVardeclStmt(VarDeclStmt stmt, Object arg) {
 		stmt.varDecl.visit(this, arg);
+		this.currVar = stmt.varDecl.name;
 		stmt.initExp.visit(this, arg);
+		this.currVar = null;
 		return true;
 	}
 
@@ -316,12 +328,18 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitThisRef(ThisRef ref, Object arg) {
+		if (this.currMethodDecl.isStatic) {
+			throw new IdentificationError(ref, "this not allowed in static method");
+		}
 		return null;
 	}
 
 	@Override
 	public Object visitIdRef(IdRef ref, Object arg) {
 		Declaration dec = findDeclarationLoop(ref.id.spelling);
+		if (this.currVar.equals(ref.id.spelling)) {
+			throw new IdentificationError(ref.id, "cannot reference variable declared within initialization expression");
+		}
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
 		}
@@ -335,7 +353,7 @@ public class Identification implements Visitor<Object,Object> {
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: "+  ref.id.spelling);
 		}
-		
+
 		return null;
 	}
 
