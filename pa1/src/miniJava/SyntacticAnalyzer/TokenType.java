@@ -45,4 +45,5 @@ public enum TokenType {
 	SUB,
 	RETURN,
 	BOOLVALUE,
+	NULL,
 }

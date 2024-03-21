@@ -32,12 +32,14 @@ public class Compiler {
 		// TODO: Check if any errors exist, if so, println("Error")
 		//  then output the errors
 		if (reporter.hasErrors()) {
+			//display.showTree(abstractSyntaxTree);
 			System.out.println("Error");
 			reporter.outputErrors();
 		}
 		// TODO: If there are no errors, println("Success")
 		else {
-			display.showTree(abstractSyntaxTree);
+			//display.showTree(abstractSyntaxTree);
+			System.out.println("Success");
 		}
 	}
 }

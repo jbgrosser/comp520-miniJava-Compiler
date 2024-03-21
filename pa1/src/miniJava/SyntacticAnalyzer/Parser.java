@@ -2,6 +2,7 @@ package miniJava.SyntacticAnalyzer;
 
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.Package;
+import miniJava.ContextualAnalysis.Identification;
 import miniJava.AbstractSyntaxTrees.*;
 
 public class Parser {
@@ -22,7 +23,10 @@ public class Parser {
 	public AST parse() {
 		try {
 			// The first thing we need to parse is the Program symbol
-			return parseProgram();
+			Package programPackage = parseProgram();
+			Identification identification = new Identification(_errors);
+			identification.parse(programPackage);
+			return programPackage;
 		} catch( SyntaxError e ) { 
 			return null;
 		}
@@ -405,6 +409,10 @@ public class Parser {
 		if (TokenType.BOOLVALUE == _currentToken.getTokenType()) {
 			accept(TokenType.BOOLVALUE);
 			expression = new LiteralExpr(new BooleanLiteral(savedCurrentToken), null);
+		}
+		else if (TokenType.NULL == _currentToken.getTokenType()) {
+			accept(TokenType.NULL);
+			expression = new LiteralExpr(new NullLiteral(savedCurrentToken), null);
 		}
 		else if (TokenType.NUM == _currentToken.getTokenType()) {
 			accept(TokenType.NUM);

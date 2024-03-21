@@ -273,6 +273,9 @@ public class Scanner {
 				
 			case "new":
 				return(TokenType.NEW);
+
+			case "null":
+				return(TokenType.NULL);
 				
 			case "true": case "false":
 				return(TokenType.BOOLVALUE);
