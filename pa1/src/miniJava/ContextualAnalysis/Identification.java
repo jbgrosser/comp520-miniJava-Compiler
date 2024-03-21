@@ -337,8 +337,10 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitIdRef(IdRef ref, Object arg) {
 		Declaration dec = findDeclarationLoop(ref.id.spelling);
-		if (this.currVar.equals(ref.id.spelling)) {
-			throw new IdentificationError(ref.id, "cannot reference variable declared within initialization expression");
+		if (this.currVar != null) {
+			if (this.currVar.equals(ref.id.spelling)) {
+				throw new IdentificationError(ref.id, "cannot reference variable declared within initialization expression");
+			}
 		}
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
