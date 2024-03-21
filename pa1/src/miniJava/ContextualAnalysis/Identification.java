@@ -58,6 +58,15 @@ public class Identification implements Visitor<Object,Object> {
 		return null;
 	}
 
+	public Declaration findDeclarationLoop(String s) {
+		for (int i = idTable.size() - 1; i >= 1; i--) {
+			if (idTable.get(i).containsKey(s)) {
+				return idTable.get(i).get(s);
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public Object visitPackage(Package prog, Object arg) throws IdentificationError {
 		HashMap<String,Declaration> l0 = new HashMap<>();
@@ -103,7 +112,12 @@ public class Identification implements Visitor<Object,Object> {
 		MethodDecl md = new MethodDecl(fd, pdl, new StatementList(), null);
 		l1.put("println", md);
 		String prefix = arg + "  . ";
-
+		for(FieldDecl f : cd.fieldDeclList) {
+			addDeclaration(f.name, f, idTable.size() - 1);
+		}
+		for(MethodDecl m : cd.methodDeclList) {
+			addDeclaration(m.name, m, idTable.size() - 1);
+		}
 		for(FieldDecl f : cd.fieldDeclList) {
 			f.visit(this, prefix);
 		}
@@ -117,14 +131,12 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitFieldDecl(FieldDecl fd, Object arg) {
 		fd.type.visit(this, fd);
-		addDeclaration(fd.name, fd, idTable.size() - 1);
 		return null;
 	}
 
 	@Override
 	public Object visitMethodDecl(MethodDecl md, Object arg) {
 		md.type.visit(this, md);
-		addDeclaration(md.name, md, idTable.size() - 1);
 		HashMap<String,Declaration> l2 = new HashMap<>();
 		idTable.push(l2);
 		String prefix = arg + "  . ";
@@ -309,12 +321,9 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitIdRef(IdRef ref, Object arg) {
-		Declaration dec = findDeclaration(ref.id.spelling, idTable.size() - 1);
+		Declaration dec = findDeclarationLoop(ref.id.spelling);
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
-		}
-		else {
-			//ref.decl = dec;
 		}
 		return null;
 	}
@@ -322,13 +331,11 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitQRef(QualRef ref, Object arg) {
 		ref.ref.visit(this, arg);
-		Declaration dec = findDeclaration(ref.id.spelling, idTable.size() - 1);
+		Declaration dec = findDeclarationLoop(ref.id.spelling);
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: "+  ref.id.spelling);
 		}
-		else {
-			//ref.decl = dec;
-		}
+		
 		return null;
 	}
 
