@@ -119,7 +119,7 @@ public class Parser {
 			accept(TokenType.ID);
 
 			if (TokenType.SEMICOLON == _currentToken.getTokenType() && !isMethod) {
-				field = new FieldDecl(isPrivate, isStatic, type, identifier, null);
+				field = new FieldDecl(isPrivate, isStatic, type, identifier, classD.name, null);
 				accept(TokenType.SEMICOLON);
 				classD.fieldDeclList.add(field);
 			}
@@ -134,7 +134,7 @@ public class Parser {
 				while (TokenType.RCURLY != _currentToken.getTokenType()) {
 					statements.add(parseStatement());
 				}
-				field = new FieldDecl(isPrivate, isStatic, type, identifier, null);
+				field = new FieldDecl(isPrivate, isStatic, type, identifier, classD.name, null);
 				method = new MethodDecl(field, params, statements, null);
 				accept(TokenType.RCURLY);
 				classD.methodDeclList.add(method);
@@ -291,7 +291,7 @@ public class Parser {
 				Expression e = parseOr();
 				accept(TokenType.SEMICOLON);
 				ClassType c = new ClassType(new Identifier(savedCurrentToken), null);
-				statement = new VarDeclStmt(new VarDecl(c, temp.getTokenText(), null), e, null);
+				statement = new VarDeclStmt(new VarDecl(c, temp.getTokenText(), savedCurrentToken.getTokenText(), null), e, null);
 			}
 			else if (TokenType.EQUALS == _currentToken.getTokenType()) {
 				accept(TokenType.EQUALS);
@@ -313,7 +313,7 @@ public class Parser {
 					Token temp = _currentToken;
 					accept(TokenType.ID);
 					accept(TokenType.EQUALS);
-					statement = new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(savedCurrentToken), null), null), temp.getTokenText(), null), parseOr(), null);
+					statement = new VarDeclStmt(new VarDecl(new ArrayType(new ClassType(new Identifier(savedCurrentToken), null), null), temp.getTokenText(), savedCurrentToken.getTokenText(), null), parseOr(), null);
 				}
 				accept(TokenType.SEMICOLON);
 			}
@@ -394,7 +394,7 @@ public class Parser {
 			accept(TokenType.EQUALS);
 			Expression e = parseOr();
 			accept(TokenType.SEMICOLON);
-			return new VarDeclStmt(new VarDecl(type, temp.getTokenText(), null), e, null);
+			return new VarDeclStmt(new VarDecl(type, temp.getTokenText(), savedCurrentToken.getTokenText(), null), e, null);
 		}
 		else {
 			accept(TokenType.ERROR);

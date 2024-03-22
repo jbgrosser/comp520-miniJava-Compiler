@@ -1,5 +1,6 @@
 package miniJava.ContextualAnalysis;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -14,6 +15,9 @@ public class Identification implements Visitor<Object,Object> {
 	private Stack<HashMap<String,Declaration>> idTable = new Stack<>();
 	private MethodDecl currMethodDecl = null;
 	private String currVar = null;
+	private ClassDecl helperClass = null;
+	private ClassDecl currentClass = null;
+	private boolean qref = false;
 	
 	public Identification(ErrorReporter errors) {
 		this._errors = errors;
@@ -63,14 +67,14 @@ public class Identification implements Visitor<Object,Object> {
 	public Declaration findDeclarationLoop(String s) {
 		for (int i = idTable.size() - 1; i >= 1; i--) {
 			if (idTable.get(i).containsKey(s)) {
-				if (i == 1) {
-					if (idTable.get(i).get(s).toString().equals("FieldDecl")) {
-						return idTable.get(i).get(s);
-					}
-				}
-				else {
+				// if (i == 1) {
+				// 	if (idTable.get(i).get(s).toString().equals("FieldDecl")) {
+				// 		return idTable.get(i).get(s);
+				// 	}
+				// }
+				// else {
 					return idTable.get(i).get(s);
-				}
+				// }
 			}
 		}
 		return null;
@@ -103,6 +107,7 @@ public class Identification implements Visitor<Object,Object> {
 			}
 		}
 		for(ClassDecl c : prog.classDeclList) {
+			this.currentClass = c;
 			c.visit(this, prefix);
 		}
 		idTable.pop();
@@ -235,7 +240,9 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitCallStmt(CallStmt stmt, Object arg) {
-		stmt.methodRef.visit(this, arg);
+		if (stmt.methodRef.visit(this, arg).equals("MethodDecl")) {
+
+		} 
 		if (stmt.methodRef.toString().equals("ThisRef")) {
 			throw new IdentificationError(stmt.methodRef, "this is not allowed as a method call");
 		}
@@ -331,32 +338,72 @@ public class Identification implements Visitor<Object,Object> {
 		if (this.currMethodDecl.isStatic) {
 			throw new IdentificationError(ref, "this not allowed in static method");
 		}
+		this.helperClass = this.currentClass;
 		return null;
 	}
 
 	@Override
 	public Object visitIdRef(IdRef ref, Object arg) {
-		Declaration dec = findDeclarationLoop(ref.id.spelling);
 		if (this.currVar != null) {
 			if (this.currVar.equals(ref.id.spelling)) {
 				throw new IdentificationError(ref.id, "cannot reference variable declared within initialization expression");
 			}
 		}
+		Declaration dec = null;
+		if(this.qref) {
+			for (int i = idTable.size() - 1; i >= 0; i--) {
+				if (idTable.get(i).containsKey(ref.id.spelling)) {
+					dec = idTable.get(i).get(ref.id.spelling);
+				}
+			}
+		}
+		else {
+			dec = findDeclarationLoop(ref.id.spelling);
+		}
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
 		}
-		return null;
+		
+		if (qref) {
+			if (dec.toString().equals("VarDecl")) {
+				this.helperClass = (ClassDecl) this.idTable.get(0).get(((VarDecl) dec).classn);
+			}
+			else if (dec.toString().equals("FieldDecl")) {
+				this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
+			}	
+			else if (dec.toString().equals("ClassDecl")) {
+				this.helperClass = (ClassDecl) this.idTable.get(0).get(dec.name);
+			}
+			else {
+				System.out.println(dec.toString());
+			}
+		}
+		return "VarDecl";
 	}
 
 	@Override
 	public Object visitQRef(QualRef ref, Object arg) {
+		this.qref = true;
 		ref.ref.visit(this, arg);
-		Declaration dec = findDeclarationLoop(ref.id.spelling);
-		if (dec == null) {
-			throw new IdentificationError(ref, "Declaration not found: "+  ref.id.spelling);
+		if (this.helperClass == null) {
+			throw new IdentificationError(ref, "Qual Ref Error");
 		}
-
-		return null;
+		else {
+			for (MethodDecl md : this.helperClass.methodDeclList) {
+				if (ref.id.spelling.equals(md.name)) {
+					this.helperClass = null;
+					break;
+				}
+			}
+			for (FieldDecl fd : this.helperClass.fieldDeclList) {
+				if (ref.id.spelling.equals(fd.name)) {
+					this.helperClass = (ClassDecl) this.idTable.get(0).get(fd.name);
+					break;
+				}
+			}
+		}
+		this.qref = false;
+		return "MethodDecl";
 	}
 
 	@Override

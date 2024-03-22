@@ -8,11 +8,16 @@ package miniJava.AbstractSyntaxTrees;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public class VarDecl extends LocalDecl {
-	
+	public String classn;
 	public VarDecl(TypeDenoter t, String name, SourcePosition posn) {
 		super(name, t, posn);
+		this.classn = null;
 	}
 	
+	public VarDecl(TypeDenoter t, String name, String classn, SourcePosition posn) {
+		super(name, t, posn);
+		this.classn = classn;
+	}
 	public <A,R> R visit(Visitor<A,R> v, A o) {
 		return v.visitVarDecl(this, o);
 	}

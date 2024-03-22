@@ -9,10 +9,8 @@ import miniJava.SyntacticAnalyzer.Token;
 
 public class Identifier extends Terminal {
 
-  //private Declaration dec;
   public Identifier (Token t) {
     super (t);
-    //this.dec = d;
   }
 
   public <A,R> R visit(Visitor<A,R> v, A o) {
