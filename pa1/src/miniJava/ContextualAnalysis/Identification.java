@@ -250,9 +250,14 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitIfStmt(IfStmt stmt, Object arg) {
 		stmt.cond.visit(this, arg);
-		if (stmt.thenStmt.visit(this, arg) != null) {
-			throw new IdentificationError(stmt.thenStmt, "solitary variable declaration statement not permitted here");
+		if (stmt.elseStmt == null) {
+			if (stmt.thenStmt.visit(this, arg) != null) {
+				throw new IdentificationError(stmt.thenStmt, "solitary variable declaration statement not permitted here");
+			}
 		}
+		// if (stmt.thenStmt.visit(this, arg) != null) {
+		// 	throw new IdentificationError(stmt.thenStmt, "solitary variable declaration statement not permitted here");
+		// }
 		if (stmt.elseStmt != null) {
 			if (stmt.elseStmt.visit(this, arg) != null) {
 				throw new IdentificationError(stmt.elseStmt, "solitary variable declaration statement not permitted here");
@@ -398,9 +403,6 @@ public class Identification implements Visitor<Object,Object> {
 								}
 							}
 						}
-						else {
-							throw new IdentificationError(ref, "Mulit Qual Fail");
-						}
 						break;
 					}
 				}
@@ -421,9 +423,6 @@ public class Identification implements Visitor<Object,Object> {
 									}
 								}
 							}
-						}
-						else {
-							throw new IdentificationError(ref, "Mulit Qual Fail");
 						}
 						break;
 					}
