@@ -389,16 +389,26 @@ public class Identification implements Visitor<Object,Object> {
 			throw new IdentificationError(ref, "Qual Ref Error");
 		}
 		else {
-			for (MethodDecl md : this.helperClass.methodDeclList) {
-				if (ref.id.spelling.equals(md.name)) {
-					this.helperClass = null;
-					break;
+			if (this.helperClass != null && this.helperClass.fieldDeclList != null) {
+				for (FieldDecl fd : this.helperClass.fieldDeclList) {
+					if (ref.id.spelling.equals(fd.name)) {
+						if (!this.currentClass.name.equals(this.helperClass.name) && fd.isPrivate) {
+							throw new IdentificationError(ref, "private field error");
+						}
+						this.helperClass = (ClassDecl) this.idTable.get(0).get(fd.name);
+						break;
+					}
 				}
 			}
-			for (FieldDecl fd : this.helperClass.fieldDeclList) {
-				if (ref.id.spelling.equals(fd.name)) {
-					this.helperClass = (ClassDecl) this.idTable.get(0).get(fd.name);
-					break;
+			if (this.helperClass != null && this.helperClass.methodDeclList != null) {
+				for (MethodDecl md : this.helperClass.methodDeclList) {
+					if (ref.id.spelling.equals(md.name)) {
+						if (!this.currentClass.name.equals(this.helperClass.name) && md.isPrivate) {
+							throw new IdentificationError(ref, "private method error");
+						}
+						this.helperClass = null;
+						break;
+					}
 				}
 			}
 		}
