@@ -383,7 +383,7 @@ public class Identification implements Visitor<Object,Object> {
 				this.helperClass = (ClassDecl) this.idTable.get(0).get(((MethodDecl) dec).classn);
 			}
 			else {
-				System.out.println(dec.toString());
+				//System.out.println(dec.toString());
 			}
 		}
 		return "VarDecl";
