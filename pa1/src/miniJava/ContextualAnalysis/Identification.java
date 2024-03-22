@@ -290,7 +290,10 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitRefExpr(RefExpr expr, Object arg) {
-		expr.ref.visit(this, arg);
+		Object o = expr.ref.visit(this, arg);
+		if (o != null && o.equals("MethodDecl")) {
+			throw new IdentificationError(expr.ref, "Can't visit field as a method");
+		}
 		return null;
 	}
 
@@ -303,7 +306,10 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitCallExpr(CallExpr expr, Object arg) {
-		expr.functionRef.visit(this, arg);
+		Object o = expr.functionRef.visit(this, arg);
+		if (o != null && o.equals("FieldDecl")) {
+			throw new IdentificationError(expr.functionRef, "Can't visit method as a field");
+		}
 		for (Expression e : expr.argList) {
 			e.visit(this, arg);
 		}
@@ -312,11 +318,13 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitLiteralExpr(LiteralExpr expr, Object arg) {
+		expr.lit.visit(this, arg);
 		return null;
 	}
 
 	@Override
 	public Object visitNewObjectExpr(NewObjectExpr expr, Object arg) {
+		expr.classtype.visit(this, arg);
 		return null;
 	}
 
@@ -333,7 +341,7 @@ public class Identification implements Visitor<Object,Object> {
 			throw new IdentificationError(ref, "this not allowed in static method");
 		}
 		this.helperClass = this.currentClass;
-		return null;
+		return "ThisRef";
 	}
 
 	@Override
@@ -364,6 +372,9 @@ public class Identification implements Visitor<Object,Object> {
 			}
 			else if (dec.toString().equals("FieldDecl")) {
 				this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
+				if (dec.type.toString().equals("ArrayType")) {
+					throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+				}
 			}	
 			else if (dec.toString().equals("ClassDecl")) {
 				this.helperClass = (ClassDecl) this.idTable.get(0).get(dec.name);
@@ -403,7 +414,7 @@ public class Identification implements Visitor<Object,Object> {
 								}
 							}
 						}
-						break;
+						return "FieldDecl";
 					}
 				}
 			}
@@ -424,13 +435,13 @@ public class Identification implements Visitor<Object,Object> {
 								}
 							}
 						}
-						break;
+						return "MethodDecl";
 					}
 				}
 			}
 		}
 		this.qref = false;
-		return "MethodDecl";
+		return null;
 	}
 
 	@Override
