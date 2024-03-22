@@ -1,6 +1,5 @@
 package miniJava.ContextualAnalysis;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Stack;
 
@@ -67,14 +66,7 @@ public class Identification implements Visitor<Object,Object> {
 	public Declaration findDeclarationLoop(String s) {
 		for (int i = idTable.size() - 1; i >= 1; i--) {
 			if (idTable.get(i).containsKey(s)) {
-				// if (i == 1) {
-				// 	if (idTable.get(i).get(s).toString().equals("FieldDecl")) {
-				// 		return idTable.get(i).get(s);
-				// 	}
-				// }
-				// else {
-					return idTable.get(i).get(s);
-				// }
+				return idTable.get(i).get(s);
 			}
 		}
 		return null;
@@ -85,7 +77,7 @@ public class Identification implements Visitor<Object,Object> {
 		HashMap<String,Declaration> l0 = new HashMap<>();
 		idTable.add(l0);
 		String prefix = arg + "  . ";
-		FieldDecl fd = new FieldDecl(true, true, new ClassType(new Identifier(new Token(TokenType.ID, "_PrintStream")), null),"out" , null);
+		FieldDecl fd = new FieldDecl(false, true, new ClassType(new Identifier(new Token(TokenType.ID, "_PrintStream")), null),"out" , null);
 		FieldDeclList fdl = new FieldDeclList();
 		fdl.add(fd);
 		l0.put("System", new ClassDecl("System", fdl, new MethodDeclList(), null));
@@ -118,7 +110,7 @@ public class Identification implements Visitor<Object,Object> {
 	public Object visitClassDecl(ClassDecl cd, Object arg) {
 		HashMap<String,Declaration> l1 = new HashMap<>();
 		idTable.push(l1);
-		FieldDecl fd = new FieldDecl(true, true, new ClassType(new Identifier(new Token(TokenType.ID, "_PrintStream")), null),"out" , null);
+		FieldDecl fd = new FieldDecl(false, true, new ClassType(new Identifier(new Token(TokenType.ID, "_PrintStream")), null),"out" , null);
 		l1.put("out", fd);
 		ParameterDecl pd = new ParameterDecl(new BaseType(TypeKind.INT, null), "n", null);
 		ParameterDeclList pdl = new ParameterDeclList();
@@ -240,9 +232,6 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitCallStmt(CallStmt stmt, Object arg) {
-		if (stmt.methodRef.visit(this, arg).equals("MethodDecl")) {
-
-		} 
 		if (stmt.methodRef.toString().equals("ThisRef")) {
 			throw new IdentificationError(stmt.methodRef, "this is not allowed as a method call");
 		}
@@ -374,6 +363,9 @@ public class Identification implements Visitor<Object,Object> {
 			else if (dec.toString().equals("ClassDecl")) {
 				this.helperClass = (ClassDecl) this.idTable.get(0).get(dec.name);
 			}
+			else if (dec.toString().equals("MethodDecl")) {
+				this.helperClass = (ClassDecl) this.idTable.get(0).get(((MethodDecl) dec).classn);
+			}
 			else {
 				System.out.println(dec.toString());
 			}
@@ -393,9 +385,19 @@ public class Identification implements Visitor<Object,Object> {
 				for (FieldDecl fd : this.helperClass.fieldDeclList) {
 					if (ref.id.spelling.equals(fd.name)) {
 						if (!this.currentClass.name.equals(this.helperClass.name) && fd.isPrivate) {
-							throw new IdentificationError(ref, "private field error");
+							throw new IdentificationError(ref, "private field error: " + fd.name);
 						}
-						this.helperClass = (ClassDecl) this.idTable.get(0).get(fd.name);
+						if (idTable.get(1).containsKey(fd.name)) {
+							for (Declaration value : idTable.get(0).values()) {
+								ClassDecl cl = (ClassDecl) value;
+								for (MethodDecl m : cl.methodDeclList) {
+									if (m.name.equals(fd.name)) {
+										this.helperClass = (ClassDecl) cl;
+										break;
+									}
+								}
+							}
+						}
 						break;
 					}
 				}
@@ -404,9 +406,19 @@ public class Identification implements Visitor<Object,Object> {
 				for (MethodDecl md : this.helperClass.methodDeclList) {
 					if (ref.id.spelling.equals(md.name)) {
 						if (!this.currentClass.name.equals(this.helperClass.name) && md.isPrivate) {
-							throw new IdentificationError(ref, "private method error");
+							throw new IdentificationError(ref, "private method error: " + md.name);
 						}
-						this.helperClass = null;
+						if (idTable.get(1).containsKey(md.name)) {
+							for (Declaration value : idTable.get(0).values()) {
+								ClassDecl cl = (ClassDecl) value;
+								for (MethodDecl m : cl.methodDeclList) {
+									if (m.name.equals(md.name)) {
+										this.helperClass = (ClassDecl) cl;
+										break;
+									}
+								}
+							}
+						}
 						break;
 					}
 				}

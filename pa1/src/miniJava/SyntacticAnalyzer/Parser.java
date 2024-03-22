@@ -135,7 +135,7 @@ public class Parser {
 					statements.add(parseStatement());
 				}
 				field = new FieldDecl(isPrivate, isStatic, type, identifier, classD.name, null);
-				method = new MethodDecl(field, params, statements, null);
+				method = new MethodDecl(field, params, statements, classD.name, null);
 				accept(TokenType.RCURLY);
 				classD.methodDeclList.add(method);
 			}	
@@ -466,7 +466,7 @@ public class Parser {
 				reference = new IdRef(new Identifier(savedCurrentToken), null);
 			}
 
-			if (TokenType.DOT == _currentToken.getTokenType()) {
+			while (TokenType.DOT == _currentToken.getTokenType()) {
 				accept(TokenType.DOT);
 				reference = new QualRef(reference, new Identifier(_currentToken), null);
 				accept(TokenType.ID);
