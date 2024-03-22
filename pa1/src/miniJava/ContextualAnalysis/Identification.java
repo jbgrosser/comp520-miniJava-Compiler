@@ -398,6 +398,9 @@ public class Identification implements Visitor<Object,Object> {
 								}
 							}
 						}
+						else {
+							throw new IdentificationError(ref, "Mulit Qual Fail");
+						}
 						break;
 					}
 				}
@@ -418,6 +421,9 @@ public class Identification implements Visitor<Object,Object> {
 									}
 								}
 							}
+						}
+						else {
+							throw new IdentificationError(ref, "Mulit Qual Fail");
 						}
 						break;
 					}
