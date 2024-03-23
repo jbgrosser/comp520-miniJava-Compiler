@@ -356,6 +356,7 @@ public class Identification implements Visitor<Object,Object> {
 			for (int i = idTable.size() - 1; i >= 0; i--) {
 				if (idTable.get(i).containsKey(ref.id.spelling)) {
 					dec = idTable.get(i).get(ref.id.spelling);
+					break;
 				}
 			}
 		}
@@ -365,16 +366,15 @@ public class Identification implements Visitor<Object,Object> {
 		if (dec == null) {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
 		}
-		
 		if (dec.toString().equals("VarDecl")) {
 			this.helperClass = (ClassDecl) this.idTable.get(0).get(((VarDecl) dec).classn);
 			return "VarDecl";
 		}
 		else if (dec.toString().equals("FieldDecl")) {
 			this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
-			if (dec.type.toString().equals("ArrayType")) {
-				throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
-			}
+			// if (dec.type.toString().equals("ArrayType")) {
+			// 	throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+			// }
 			return "FieldDecl";
 		}	
 		else if (dec.toString().equals("ClassDecl")) {
