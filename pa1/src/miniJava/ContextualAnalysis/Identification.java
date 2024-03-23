@@ -291,7 +291,7 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitRefExpr(RefExpr expr, Object arg) {
 		Object o = expr.ref.visit(this, arg);
-		if (o != null && o.equals("MethodDecl")) {
+		if (((String)o).equals("MethodDecl")) {
 			throw new IdentificationError(expr.ref, "Can't visit field as a method");
 		}
 		return null;
@@ -307,7 +307,7 @@ public class Identification implements Visitor<Object,Object> {
 	@Override
 	public Object visitCallExpr(CallExpr expr, Object arg) {
 		Object o = expr.functionRef.visit(this, arg);
-		if (o != null && o.equals("FieldDecl")) {
+		if (((String)o).equals("FieldDecl")) {
 			throw new IdentificationError(expr.functionRef, "Can't visit method as a field");
 		}
 		for (Expression e : expr.argList) {
@@ -366,33 +366,37 @@ public class Identification implements Visitor<Object,Object> {
 			throw new IdentificationError(ref, "Declaration not found: " + ref.id.spelling);
 		}
 		
-		if (qref) {
-			if (dec.toString().equals("VarDecl")) {
-				this.helperClass = (ClassDecl) this.idTable.get(0).get(((VarDecl) dec).classn);
-			}
-			else if (dec.toString().equals("FieldDecl")) {
-				this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
-				if (dec.type.toString().equals("ArrayType")) {
-					throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
-				}
-			}	
-			else if (dec.toString().equals("ClassDecl")) {
-				this.helperClass = (ClassDecl) this.idTable.get(0).get(dec.name);
-			}
-			else if (dec.toString().equals("MethodDecl")) {
-				this.helperClass = (ClassDecl) this.idTable.get(0).get(((MethodDecl) dec).classn);
-			}
-			else {
-				//System.out.println(dec.toString());
-			}
+		if (dec.toString().equals("VarDecl")) {
+			this.helperClass = (ClassDecl) this.idTable.get(0).get(((VarDecl) dec).classn);
+			return "VarDecl";
 		}
-		return "VarDecl";
+		else if (dec.toString().equals("FieldDecl")) {
+			this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
+			if (dec.type.toString().equals("ArrayType")) {
+				throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+			}
+			return "FieldDecl";
+		}	
+		else if (dec.toString().equals("ClassDecl")) {
+			this.helperClass = (ClassDecl) this.idTable.get(0).get(dec.name);
+			return "ClassDecl";
+		}
+		else if (dec.toString().equals("MethodDecl")) {
+			this.helperClass = (ClassDecl) this.idTable.get(0).get(((MethodDecl) dec).classn);
+			return "MethodDecl";
+		}
+		else {
+			return "OtherDecl";
+			//System.out.println(dec.toString());
+		}
 	}
 
 	@Override
 	public Object visitQRef(QualRef ref, Object arg) {
 		this.qref = true;
-		ref.ref.visit(this, arg);
+		if (ref.ref.visit(this, arg).equals("MethodDecl")) {
+			throw new IdentificationError(ref, "Method/Field Issue");
+		}
 		if (this.helperClass == null) {
 			throw new IdentificationError(ref, "Qual Ref Error");
 		}
@@ -441,7 +445,7 @@ public class Identification implements Visitor<Object,Object> {
 			}
 		}
 		this.qref = false;
-		return null;
+		return "Qref";
 	}
 
 	@Override
