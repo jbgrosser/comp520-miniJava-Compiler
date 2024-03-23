@@ -356,6 +356,12 @@ public class Identification implements Visitor<Object,Object> {
 			for (int i = idTable.size() - 1; i >= 0; i--) {
 				if (idTable.get(i).containsKey(ref.id.spelling)) {
 					dec = idTable.get(i).get(ref.id.spelling);
+					if (i >= 2 && ((VarDecl) dec).type.typeKind != TypeKind.CLASS) {
+						throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+					}
+					if (i == 1 && ((FieldDecl) dec).type.typeKind != TypeKind.CLASS) {
+						throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+					}
 					break;
 				}
 			}
@@ -372,9 +378,6 @@ public class Identification implements Visitor<Object,Object> {
 		}
 		else if (dec.toString().equals("FieldDecl")) {
 			this.helperClass = (ClassDecl) this.idTable.get(0).get(((FieldDecl) dec).classn);
-			// if (dec.type.toString().equals("ArrayType")) {
-			// 	throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
-			// }
 			return "FieldDecl";
 		}	
 		else if (dec.toString().equals("ClassDecl")) {
