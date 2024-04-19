@@ -3,6 +3,7 @@ package miniJava.SyntacticAnalyzer;
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.Package;
 import miniJava.ContextualAnalysis.Identification;
+import miniJava.ContextualAnalysis.TypeChecking;
 import miniJava.AbstractSyntaxTrees.*;
 
 public class Parser {
@@ -26,6 +27,8 @@ public class Parser {
 			Package programPackage = parseProgram();
 			Identification identification = new Identification(_errors);
 			identification.parse(programPackage);
+			TypeChecking typeChecking = new TypeChecking(_errors);
+			typeChecking.parse(programPackage);
 			return programPackage;
 		} catch( SyntaxError e ) { 
 			return null;
@@ -126,7 +129,7 @@ public class Parser {
 			else {
 				accept(TokenType.LPAREN);
 				if (TokenType.RPAREN != _currentToken.getTokenType()) {
-					params = parseParams();
+					params = parseParams(classD.name);
 				}
 				accept(TokenType.RPAREN);
 				accept(TokenType.LCURLY);
@@ -182,11 +185,11 @@ public class Parser {
 		}
 	}
 
-	private ParameterDeclList parseParams() throws SyntaxError {
+	private ParameterDeclList parseParams(String classD) throws SyntaxError {
 		ParameterDeclList params = new ParameterDeclList();
 		
 		TypeDenoter type = parseType();
-		ParameterDecl param = new ParameterDecl(type, _currentToken.getTokenText(), null);
+		ParameterDecl param = new ParameterDecl(type, _currentToken.getTokenText(), classD, null);
 		accept(TokenType.ID);
 		params.add(param);
 		
@@ -194,7 +197,7 @@ public class Parser {
 			accept(TokenType.COMMA);
 			
 			type = parseType();
-			param = new ParameterDecl(type, _currentToken.getTokenText(), null);
+			param = new ParameterDecl(type, _currentToken.getTokenText(), classD, null);
 			accept(TokenType.ID);
 			params.add(param);
 		}

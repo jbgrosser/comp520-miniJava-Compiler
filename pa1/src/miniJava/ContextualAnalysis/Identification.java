@@ -76,7 +76,6 @@ public class Identification implements Visitor<Object,Object> {
 	public Object visitPackage(Package prog, Object arg) throws IdentificationError {
 		HashMap<String,Declaration> l0 = new HashMap<>();
 		idTable.add(l0);
-		String prefix = arg + "  . ";
 		FieldDecl fd = new FieldDecl(false, true, new ClassType(new Identifier(new Token(TokenType.ID, "_PrintStream")), null),"out" , null);
 		FieldDeclList fdl = new FieldDeclList();
 		fdl.add(fd);
@@ -100,7 +99,7 @@ public class Identification implements Visitor<Object,Object> {
 		}
 		for(ClassDecl c : prog.classDeclList) {
 			this.currentClass = c;
-			c.visit(this, prefix);
+			c.visit(this, arg);
 		}
 		idTable.pop();
 		return null;
@@ -117,7 +116,6 @@ public class Identification implements Visitor<Object,Object> {
 		pdl.add(pd);
 		MethodDecl md = new MethodDecl(fd, pdl, new StatementList(), null);
 		l1.put("println", md);
-		String prefix = arg + "  . ";
 		for(FieldDecl f : cd.fieldDeclList) {
 			addDeclaration(f.name, f, idTable.size() - 1);
 		}
@@ -125,10 +123,10 @@ public class Identification implements Visitor<Object,Object> {
 			addDeclaration(m.name, m, idTable.size() - 1);
 		}
 		for(FieldDecl f : cd.fieldDeclList) {
-			f.visit(this, prefix);
+			f.visit(this, arg);
 		}
 		for(MethodDecl m : cd.methodDeclList) {
-			m.visit(this, prefix);
+			m.visit(this, arg);
 		}
 		idTable.pop();
 		return null;
@@ -146,12 +144,11 @@ public class Identification implements Visitor<Object,Object> {
 		md.type.visit(this, md);
 		HashMap<String,Declaration> l2 = new HashMap<>();
 		idTable.push(l2);
-		String prefix = arg + "  . ";
 		for (ParameterDecl p : md.parameterDeclList) {
-			p.visit(this, prefix);
+			p.visit(this, arg);
 		}
 		for (Statement s : md.statementList) {
-			s.visit(this, prefix);
+			s.visit(this, arg);
 		}
 		idTable.pop();
 		return null;
@@ -194,11 +191,10 @@ public class Identification implements Visitor<Object,Object> {
 	public Object visitBlockStmt(BlockStmt stmt, Object arg) {
 		HashMap<String,Declaration> l3 = new HashMap<>();
 		idTable.push(l3);
-		String prefix = arg + "  . ";
 		Object temp = null;
 
 		for (Statement s : stmt.sl) {
-			if (s.visit(this, prefix) != null) {
+			if (s.visit(this, arg) != null) {
 				temp = true;
 			}
 		}
@@ -243,7 +239,9 @@ public class Identification implements Visitor<Object,Object> {
 
 	@Override
 	public Object visitReturnStmt(ReturnStmt stmt, Object arg) {
-		stmt.returnExpr.visit(this, arg);
+		if (stmt.returnExpr != null) {
+			stmt.returnExpr.visit(this, arg);
+		}
 		return null;
 	}
 
@@ -356,12 +354,12 @@ public class Identification implements Visitor<Object,Object> {
 			for (int i = idTable.size() - 1; i >= 0; i--) {
 				if (idTable.get(i).containsKey(ref.id.spelling)) {
 					dec = idTable.get(i).get(ref.id.spelling);
-					if (i >= 2 && ((VarDecl) dec).type.typeKind != TypeKind.CLASS) {
-						throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
-					}
-					if (i == 1 && ((FieldDecl) dec).type.typeKind != TypeKind.CLASS) {
-						throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
-					}
+					// if (i >= 2 && ((VarDecl) dec).type.typeKind != TypeKind.CLASS) {
+					// 	throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+					// }
+					// if (i == 1 && ((FieldDecl) dec).type.typeKind != TypeKind.CLASS) {
+					// 	throw new IdentificationError(ref, "ArrayType cannot access attribute of class");
+					// }
 					break;
 				}
 			}

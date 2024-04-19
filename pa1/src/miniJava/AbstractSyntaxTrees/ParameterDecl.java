@@ -8,9 +8,15 @@ package miniJava.AbstractSyntaxTrees;
 import miniJava.SyntacticAnalyzer.SourcePosition;
 
 public class ParameterDecl extends LocalDecl {
-	
+	public String classn;
 	public ParameterDecl(TypeDenoter t, String name, SourcePosition posn){
 		super(name, t, posn);
+		this.classn = null;
+	}
+
+	public ParameterDecl(TypeDenoter t, String name, String classn, SourcePosition posn){
+		super(name, t, posn);
+		this.classn = classn;
 	}
 	
 	public <A, R> R visit(Visitor<A, R> v, A o) {
