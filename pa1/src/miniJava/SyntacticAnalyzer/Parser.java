@@ -2,6 +2,7 @@ package miniJava.SyntacticAnalyzer;
 
 import miniJava.ErrorReporter;
 import miniJava.AbstractSyntaxTrees.Package;
+import miniJava.CodeGeneration.CodeGenerator;
 import miniJava.ContextualAnalysis.Identification;
 import miniJava.ContextualAnalysis.TypeChecking;
 import miniJava.AbstractSyntaxTrees.*;
@@ -29,6 +30,8 @@ public class Parser {
 			identification.parse(programPackage);
 			TypeChecking typeChecking = new TypeChecking(_errors);
 			typeChecking.parse(programPackage);
+			CodeGenerator codeGenerator = new CodeGenerator(_errors);
+			codeGenerator.parse(programPackage);
 			return programPackage;
 		} catch( SyntaxError e ) { 
 			return null;

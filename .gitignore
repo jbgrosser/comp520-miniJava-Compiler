@@ -22,3 +22,13 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+a.out
+.project
+pa1/.project
+.idea/
+comp520-pa1-starter.iml
+.DS_Store
+pa1/.DS_Store
+pa1/src/.DS_Store
+pa1/src/miniJava/.DS_Store
